@@ -1,6 +1,6 @@
 # Hamster Wheel Task Manager
 
-A simple HTTP ui for printing formatted tasks to an attached receipt printer, designed for on-board task management.
+A simple HTTP UI for printing formatted tasks to an attached receipt printer, designed for on-board task management.
 
 ## Overview
 
@@ -9,8 +9,10 @@ This project provides a web interface and API endpoint that allows you to:
 - Generate professionally formatted task images with proper typography
 - Print high-quality task receipts to a USB-connected receipt printer
 - Automatically cut receipts after printing with timestamps
+- **Schedule recurring tasks** that print automatically at specified times
+- **Manually trigger recurring tasks** through the web interface
 
-Perfect for procrastinators and ADHD types. Turn your todo list into something in the real world you cannot ignore.
+Perfect for expert procrastinators and ADHD types. Turn your todo list into something physical in the real world you cannot ignore.
 
 ## Setup
 
@@ -44,6 +46,12 @@ uv sync
    width = 576          # Image width in pixels (576 works well for most thermal printers)
    margin = 20          # Margin around text in pixels
    line_spacing = 10    # Extra spacing between lines in pixels
+
+   [recurring_tasks]
+   # Recurring tasks configuration
+   # Format: task_name = { title = "Title", description = "Description", schedule = "cron_expression" }
+   mow_lawn = { title = "Mow the lawn", description = "Time to mow the lawn and maintain the yard", schedule = "0 12 * * 6" }
+   dishwasher = { title = "Run the dishwasher", description = "Collect dirty dishes and run the dishwasher", schedule = "0 15 * * 0" }
    ```
 
 ### 3. Run the Application
@@ -58,7 +66,7 @@ The web interface will be available at http://localhost:8000
 
 ### Web Interface
 
-Navigate to http://localhost:8000 in your browser to access the simple task entry form.
+Navigate to http://localhost:8000 in your browser to access the task entry form and recurring tasks management.
 
 ### API Endpoint
 
@@ -70,13 +78,54 @@ curl -X POST "http://localhost:8000/api/print-task" \
      -d '{"title": "Check engine oil", "description": "Check and top up engine oil before departure"}'
 ```
 
+### Recurring Tasks
+
+The application supports automatically scheduled recurring tasks that print at specified times. Configure these in the `[recurring_tasks]` section of your `config.toml`:
+
+#### Configuration Format
+```toml
+[recurring_tasks]
+task_name = { title = "Task Title", description = "Task Description", schedule = "cron_expression" }
+```
+
+#### Schedule Format
+Uses cron format: `"minute hour day month weekday"`
+- **minute**: 0-59
+- **hour**: 0-23 (24-hour format)
+- **day**: 1-31 (day of month, not used in current implementation)
+- **month**: 1-12 (not used in current implementation)
+- **weekday**: 0-6 (0=Sunday, 1=Monday, ..., 6=Saturday)
+
+#### Examples
+```toml
+[recurring_tasks]
+# Every Saturday at 12:00 PM
+mow_lawn = { title = "Mow the lawn", description = "Time to mow the lawn and maintain the yard", schedule = "0 12 * * 6" }
+
+# Every Sunday at 3:00 PM
+dishwasher = { title = "Run the dishwasher", description = "Collect dirty dishes and run the dishwasher", schedule = "0 15 * * 0" }
+
+# Every Monday at 9:00 AM
+weekly_planning = { title = "Weekly Planning", description = "Review goals and plan the week ahead", schedule = "0 9 * * 1" }
+
+# Every day at 8:00 AM
+morning_routine = { title = "Morning Routine", description = "Complete morning routine checklist", schedule = "0 8 * * *" }
+```
+
+#### Manual Printing
+Each configured recurring task appears in the web interface with a green "Print Now" button, allowing you to print any recurring task manually without waiting for its scheduled time.
+
+#### API Endpoints
+- `GET /api/recurring-tasks` - List all configured recurring tasks
+- `POST /api/print-recurring-task/{task_name}` - Manually print a specific recurring task
+
 ## Receipt Format
 
 Tasks are printed as professionally formatted images with:
 - **Bordered layout** with clean lines and proper spacing
-- **Centered task title** in large, bold font (42pt)
+- **Centered task title** in large, bold font
 - **Separator line** dividing title and description
-- **Description text** in readable font (32pt) with intelligent text wrapping
+- **Description text** in readable font with intelligent text wrapping
 - **Right-aligned timestamp** showing when the task was printed
 - **Automatic text wrapping** that optimally uses the full width of the receipt
 
@@ -96,7 +145,13 @@ Example layout:
 
 ## Supported Printers
 
-This project uses python-escpos which supports a wide range of ESC/POS compatible receipt printers. I'm using a cheap clone called an HZ-8360 from Aliexpress and 80x80 Thermal paper.
+This project uses python-escpos which supports a wide range of ESC/POS compatible receipt printers including:
+- Epson TM series
+- Star Micronics
+- Citizen
+- Generic thermal receipt printers
+
+**Tested setup**: HZ-8360 clone from AliExpress with 80x80mm thermal paper rolls.
 
 ## Troubleshooting
 
@@ -129,6 +184,7 @@ The application is built with:
 - **python-escpos** for thermal printer communication
 - **Pillow (PIL)** for image generation and text rendering
 - **uvicorn** as the ASGI server
+- **schedule** for recurring task scheduling
 
 To run in development mode with auto-reload:
 ```bash

@@ -4,18 +4,19 @@
 [printer]
 # USB Vendor ID and Product ID for your receipt printer
 # Find these values using lsusb command on Linux
-vendor_id = 0x04b8  # Example: Epson vendor ID
-product_id = 0x0202  # Example: TM-T20 printer
+vendor_id = 0x0416
+product_id = 0x5011
 
 # Alternative: specify device path directly
 # device_path = "/dev/usb/lp0"
 
 # Printer settings
 cut_after_print = true
+text_width = 32  # Characters per line
 
 [image]
 # Image rendering settings for better formatting
-width = 384          # Image width in pixels (384 is common for 58mm thermal printers)
+width = 576          # Image width in pixels
 margin = 20          # Margin around text in pixels
 line_spacing = 10    # Extra spacing between lines in pixels
 
@@ -28,3 +29,5 @@ line_spacing = 10    # Extra spacing between lines in pixels
 
 mow_lawn = { title = "Mow the lawn", description = "Time to mow the lawn and maintain the yard", schedule = "0 12 * * 6" }
 dishwasher = { title = "Run the dishwasher", description = "Collect dirty dishes and run the dishwasher", schedule = "0 15 * * 0" }
+test = { title = "Test", description = "Test", schedule = "0 0 * * *" }
+morning_routine = { title = "Morning Routine", description = "Complete morning routine checklist", schedule = "0 8 * * *" }
