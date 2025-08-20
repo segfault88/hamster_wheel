@@ -1,0 +1,15 @@
+# Configuration for Receipt Printer Task Manager
+# Copy this file to config.toml and update the values
+
+[printer]
+# USB Vendor ID and Product ID for your receipt printer
+# Find these values using lsusb command on Linux
+vendor_id = 0x04b8  # Example: Epson vendor ID
+product_id = 0x0202  # Example: TM-T20 printer
+
+# Alternative: specify device path directly
+# device_path = "/dev/usb/lp0"
+
+# Printer settings
+cut_after_print = true
+text_width = 32  # Characters per line
