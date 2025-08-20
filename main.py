@@ -86,38 +86,23 @@ def create_task_image(title, description, config):
     draw.line([(margin, y_pos), (width - margin, y_pos)], fill='black', width=2)
     y_pos += 15
     
-    # Draw "TASK" header
-    task_text = "TASK"
-    task_bbox = draw.textbbox((0, 0), task_text, font=title_font)
-    task_width = task_bbox[2] - task_bbox[0]
-    task_x = (width - task_width) // 2
-    draw.text((task_x, y_pos), task_text, fill='black', font=title_font)
-    y_pos += 25
+    # Draw title as header (centered)
+    for i, line in enumerate(title_lines):
+        title_bbox = draw.textbbox((0, 0), line, font=title_font)
+        title_width = title_bbox[2] - title_bbox[0]
+        title_x = (width - title_width) // 2
+        draw.text((title_x, y_pos), line, fill='black', font=title_font)
+        y_pos += 32 + line_spacing
+    
+    y_pos += 10
     
     # Draw separator line
     draw.line([(margin, y_pos), (width - margin, y_pos)], fill='black', width=1)
-    y_pos += 15
-    
-    # Draw title
-    draw.text((margin, y_pos), "Title:", fill='black', font=title_font)
     y_pos += 20
     
-    for line in title_lines:
-        draw.text((margin + 10, y_pos), line, fill='black', font=text_font)
-        y_pos += 24 + line_spacing
-    
-    y_pos += 15
-    
-    # Draw separator
-    draw.line([(margin, y_pos), (width - margin, y_pos)], fill='gray', width=1)
-    y_pos += 20
-    
-    # Draw description
-    draw.text((margin, y_pos), "Description:", fill='black', font=title_font)
-    y_pos += 35
-    
+    # Draw description directly
     for line in description_lines:
-        draw.text((margin + 10, y_pos), line, fill='black', font=text_font)
+        draw.text((margin, y_pos), line, fill='black', font=text_font)
         y_pos += 24 + line_spacing
     
     y_pos += 20
