@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from io import BytesIO
 import textwrap
+from datetime import datetime
 try:
     import tomllib
 except ImportError:
@@ -38,35 +39,38 @@ def create_task_image(title, description, config):
     margin = image_config.get("margin", 20)
     line_spacing = image_config.get("line_spacing", 10)
     
-    # Try to load a font, fall back to default if not available
+    # Try to load a font, fall back to default if not available - doubled font sizes
     try:
-        title_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
-        text_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
+        title_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 32)
+        text_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+        datetime_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18)
     except (OSError, IOError):
         try:
             title_font = ImageFont.load_default()
             text_font = ImageFont.load_default()
+            datetime_font = ImageFont.load_default()
         except:
             title_font = ImageFont.load_default()
             text_font = ImageFont.load_default()
+            datetime_font = ImageFont.load_default()
     
     # Create a temporary image to calculate height
     temp_img = Image.new('RGB', (width, 1000), 'white')
     temp_draw = ImageDraw.Draw(temp_img)
     
-    # Calculate text dimensions
-    chars_per_line = (width - 2 * margin) // 8  # Rough estimate
+    # Calculate text dimensions - adjusted for larger fonts
+    chars_per_line = (width - 2 * margin) // 16  # Adjusted for larger font
     
     # Wrap title text
     title_lines = textwrap.wrap(title, width=chars_per_line)
-    title_height = len(title_lines) * (16 + line_spacing)
+    title_height = len(title_lines) * (32 + line_spacing)
     
     # Wrap description text
     description_lines = textwrap.wrap(description, width=chars_per_line)
-    description_height = len(description_lines) * (12 + line_spacing)
+    description_height = len(description_lines) * (24 + line_spacing)
     
-    # Calculate total height
-    total_height = margin * 3 + title_height + description_height + 60  # Extra space for decorations
+    # Calculate total height - extra space for datetime at bottom
+    total_height = margin * 3 + title_height + description_height + 120  # Extra space for decorations and datetime
     
     # Create the actual image
     img = Image.new('RGB', (width, total_height), 'white')
@@ -100,26 +104,38 @@ def create_task_image(title, description, config):
     
     for line in title_lines:
         draw.text((margin + 10, y_pos), line, fill='black', font=text_font)
-        y_pos += 12 + line_spacing
+        y_pos += 24 + line_spacing
     
-    y_pos += 10
+    y_pos += 15
     
     # Draw separator
     draw.line([(margin, y_pos), (width - margin, y_pos)], fill='gray', width=1)
-    y_pos += 15
+    y_pos += 20
     
     # Draw description
     draw.text((margin, y_pos), "Description:", fill='black', font=title_font)
-    y_pos += 20
+    y_pos += 35
     
     for line in description_lines:
         draw.text((margin + 10, y_pos), line, fill='black', font=text_font)
-        y_pos += 12 + line_spacing
+        y_pos += 24 + line_spacing
     
-    y_pos += 15
+    y_pos += 20
     
     # Draw bottom border
     draw.line([(margin, y_pos), (width - margin, y_pos)], fill='black', width=2)
+    y_pos += 15
+    
+    # Add date and time (right aligned)
+    now = datetime.now()
+    datetime_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Calculate text width for right alignment
+    datetime_bbox = draw.textbbox((0, 0), datetime_str, font=datetime_font)
+    datetime_width = datetime_bbox[2] - datetime_bbox[0]
+    datetime_x = width - margin - datetime_width
+    
+    draw.text((datetime_x, y_pos), datetime_str, fill='black', font=datetime_font)
     
     return img
 
