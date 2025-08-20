@@ -45,15 +45,20 @@ def setup_recurring_tasks():
                     "6": "saturday",
                 }
 
-                if weekday != "*" and weekday in weekday_map:
-                    day_name = weekday_map[weekday]
-                    time_str = f"{int(hour):02d}:{int(minute):02d}"
+                time_str = f"{int(hour):02d}:{int(minute):02d}"
 
-                    # Schedule the task
+                if weekday == "*":
+                    # Daily task
+                    schedule.every().day.at(time_str).do(
+                        print_recurring_task, title, description
+                    )
+                    print(f"✓ Scheduled recurring task: {title} daily at {time_str}")
+                elif weekday in weekday_map:
+                    # Weekly task
+                    day_name = weekday_map[weekday]
                     getattr(schedule.every(), day_name).at(time_str).do(
                         print_recurring_task, title, description
                     )
-
                     print(
                         f"✓ Scheduled recurring task: {title} every {day_name} at {time_str}"
                     )

@@ -30,9 +30,12 @@ def generate_main_page_html() -> str:
                 "5": "Friday",
                 "6": "Saturday",
             }
-            day_name = weekday_names.get(weekday, "Unknown")
             time_str = f"{int(hour):02d}:{int(minute):02d}"
-            schedule_display = f"Every {day_name} at {time_str}"
+            if weekday == "*":
+                schedule_display = f"Daily at {time_str}"
+            else:
+                day_name = weekday_names.get(weekday, "Unknown")
+                schedule_display = f"Every {day_name} at {time_str}"
         else:
             schedule_display = schedule
 
