@@ -1,6 +1,6 @@
-# Receipt Printer Task Manager
+# Hamster Wheel Task Manager
 
-A simple HTTP endpoint for printing beautifully formatted tasks to an attached receipt printer, designed for on-board task management.
+A simple HTTP ui for printing formatted tasks to an attached receipt printer, designed for on-board task management.
 
 ## Overview
 
@@ -10,7 +10,7 @@ This project provides a web interface and API endpoint that allows you to:
 - Print high-quality task receipts to a USB-connected receipt printer
 - Automatically cut receipts after printing with timestamps
 
-Perfect for boats, RVs, workshops, or any environment where you need physical task reminders that won't rely on digital devices. The image-based rendering ensures consistent, readable formatting regardless of printer capabilities.
+Perfect for procrastinators and ADHD types. Turn your todo list into something in the real world you cannot ignore.
 
 ## Setup
 
@@ -96,11 +96,7 @@ Example layout:
 
 ## Supported Printers
 
-This project uses python-escpos which supports a wide range of ESC/POS compatible receipt printers including:
-- Epson TM series
-- Star Micronics
-- Citizen
-- And many generic thermal receipt printers
+This project uses python-escpos which supports a wide range of ESC/POS compatible receipt printers. I'm using a cheap clone called an HZ-8360 from Aliexpress and 80x80 Thermal paper.
 
 ## Troubleshooting
 
