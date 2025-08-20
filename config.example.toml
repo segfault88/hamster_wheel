@@ -12,4 +12,9 @@ product_id = 0x0202  # Example: TM-T20 printer
 
 # Printer settings
 cut_after_print = true
-text_width = 32  # Characters per line
+
+[image]
+# Image rendering settings for better formatting
+width = 384          # Image width in pixels (384 is common for 58mm thermal printers)
+margin = 20          # Margin around text in pixels
+line_spacing = 10    # Extra spacing between lines in pixels

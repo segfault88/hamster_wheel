@@ -92,6 +92,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "pillow" },
     { name = "python-escpos", extra = ["all"] },
     { name = "python-multipart" },
     { name = "uvicorn", extra = ["standard"] },
@@ -100,6 +101,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.104.0" },
+    { name = "pillow", specifier = ">=10.0.0" },
     { name = "python-escpos", extras = ["all"], specifier = ">=3.1" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },

@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+from io import BytesIO
+import textwrap
 try:
     import tomllib
 except ImportError:
@@ -10,6 +12,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from escpos.printer import Usb
 from escpos.exceptions import USBNotFoundError
+from PIL import Image, ImageDraw, ImageFont
 
 
 app = FastAPI(title="Receipt Printer Task Manager", version="0.1.0")
@@ -27,6 +30,98 @@ def load_config():
     
     with open(config_path, "rb") as f:
         return tomllib.load(f)
+
+
+def create_task_image(title, description, config):
+    image_config = config.get("image", {})
+    width = image_config.get("width", 384)  # Common thermal printer width
+    margin = image_config.get("margin", 20)
+    line_spacing = image_config.get("line_spacing", 10)
+    
+    # Try to load a font, fall back to default if not available
+    try:
+        title_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
+        text_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
+    except (OSError, IOError):
+        try:
+            title_font = ImageFont.load_default()
+            text_font = ImageFont.load_default()
+        except:
+            title_font = ImageFont.load_default()
+            text_font = ImageFont.load_default()
+    
+    # Create a temporary image to calculate height
+    temp_img = Image.new('RGB', (width, 1000), 'white')
+    temp_draw = ImageDraw.Draw(temp_img)
+    
+    # Calculate text dimensions
+    chars_per_line = (width - 2 * margin) // 8  # Rough estimate
+    
+    # Wrap title text
+    title_lines = textwrap.wrap(title, width=chars_per_line)
+    title_height = len(title_lines) * (16 + line_spacing)
+    
+    # Wrap description text
+    description_lines = textwrap.wrap(description, width=chars_per_line)
+    description_height = len(description_lines) * (12 + line_spacing)
+    
+    # Calculate total height
+    total_height = margin * 3 + title_height + description_height + 60  # Extra space for decorations
+    
+    # Create the actual image
+    img = Image.new('RGB', (width, total_height), 'white')
+    draw = ImageDraw.Draw(img)
+    
+    # Draw decorative border
+    draw.rectangle([5, 5, width-5, total_height-5], outline='black', width=2)
+    
+    # Current y position
+    y_pos = margin + 15
+    
+    # Draw header line
+    draw.line([(margin, y_pos), (width - margin, y_pos)], fill='black', width=2)
+    y_pos += 15
+    
+    # Draw "TASK" header
+    task_text = "TASK"
+    task_bbox = draw.textbbox((0, 0), task_text, font=title_font)
+    task_width = task_bbox[2] - task_bbox[0]
+    task_x = (width - task_width) // 2
+    draw.text((task_x, y_pos), task_text, fill='black', font=title_font)
+    y_pos += 25
+    
+    # Draw separator line
+    draw.line([(margin, y_pos), (width - margin, y_pos)], fill='black', width=1)
+    y_pos += 15
+    
+    # Draw title
+    draw.text((margin, y_pos), "Title:", fill='black', font=title_font)
+    y_pos += 20
+    
+    for line in title_lines:
+        draw.text((margin + 10, y_pos), line, fill='black', font=text_font)
+        y_pos += 12 + line_spacing
+    
+    y_pos += 10
+    
+    # Draw separator
+    draw.line([(margin, y_pos), (width - margin, y_pos)], fill='gray', width=1)
+    y_pos += 15
+    
+    # Draw description
+    draw.text((margin, y_pos), "Description:", fill='black', font=title_font)
+    y_pos += 20
+    
+    for line in description_lines:
+        draw.text((margin + 10, y_pos), line, fill='black', font=text_font)
+        y_pos += 12 + line_spacing
+    
+    y_pos += 15
+    
+    # Draw bottom border
+    draw.line([(margin, y_pos), (width - margin, y_pos)], fill='black', width=2)
+    
+    return img
 
 
 def get_printer():
@@ -93,17 +188,21 @@ async def root():
 @app.post("/print-task")
 async def print_task(title: str = Form(...), description: str = Form(...)):
     try:
-        printer, config = get_printer()
+        printer, printer_config = get_printer()
+        config = load_config()
         
-        printer.text("=" * config.get("text_width", 32) + "\n")
-        printer.text("TASK\n")
-        printer.text("=" * config.get("text_width", 32) + "\n")
-        printer.text(f"Title: {title}\n")
-        printer.text("-" * config.get("text_width", 32) + "\n")
-        printer.text(f"Description:\n{description}\n")
-        printer.text("=" * config.get("text_width", 32) + "\n")
+        # Create the task image
+        img = create_task_image(title, description, config)
         
-        if config.get("cut_after_print", True):
+        # Convert image to bytes
+        img_byte_arr = BytesIO()
+        img.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+        
+        # Print the image
+        printer.image(img)
+        
+        if printer_config.get("cut_after_print", True):
             printer.cut()
         
         printer.close()
@@ -132,17 +231,21 @@ async def print_task(title: str = Form(...), description: str = Form(...)):
 @app.post("/api/print-task")
 async def api_print_task(task: TaskRequest):
     try:
-        printer, config = get_printer()
+        printer, printer_config = get_printer()
+        config = load_config()
         
-        printer.text("=" * config.get("text_width", 32) + "\n")
-        printer.text("TASK\n")
-        printer.text("=" * config.get("text_width", 32) + "\n")
-        printer.text(f"Title: {task.title}\n")
-        printer.text("-" * config.get("text_width", 32) + "\n")
-        printer.text(f"Description:\n{task.description}\n")
-        printer.text("=" * config.get("text_width", 32) + "\n")
+        # Create the task image
+        img = create_task_image(task.title, task.description, config)
         
-        if config.get("cut_after_print", True):
+        # Convert image to bytes
+        img_byte_arr = BytesIO()
+        img.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+        
+        # Print the image
+        printer.image(img)
+        
+        if printer_config.get("cut_after_print", True):
             printer.cut()
         
         printer.close()
