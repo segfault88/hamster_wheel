@@ -1,15 +1,16 @@
 # Receipt Printer Task Manager
 
-A simple HTTP endpoint for printing tasks to an attached receipt printer, designed for on-board task management.
+A simple HTTP endpoint for printing beautifully formatted tasks to an attached receipt printer, designed for on-board task management.
 
 ## Overview
 
 This project provides a web interface and API endpoint that allows you to:
 - Enter task titles and descriptions through a simple web form
-- Print tasks directly to a USB-connected receipt printer
-- Automatically cut the receipt after printing
+- Generate professionally formatted task images with proper typography
+- Print high-quality task receipts to a USB-connected receipt printer
+- Automatically cut receipts after printing with timestamps
 
-Perfect for boats, RVs, workshops, or any environment where you need physical task reminders that won't rely on digital devices.
+Perfect for boats, RVs, workshops, or any environment where you need physical task reminders that won't rely on digital devices. The image-based rendering ensures consistent, readable formatting regardless of printer capabilities.
 
 ## Setup
 
@@ -38,7 +39,11 @@ uv sync
    vendor_id = 0x04b8  # Your printer's vendor ID
    product_id = 0x0202  # Your printer's product ID
    cut_after_print = true
-   text_width = 32
+
+   [image]
+   width = 576          # Image width in pixels (576 works well for most thermal printers)
+   margin = 20          # Margin around text in pixels
+   line_spacing = 10    # Extra spacing between lines in pixels
    ```
 
 ### 3. Run the Application
@@ -67,16 +72,26 @@ curl -X POST "http://localhost:8000/api/print-task" \
 
 ## Receipt Format
 
-Tasks are printed with the following format:
+Tasks are printed as professionally formatted images with:
+- **Bordered layout** with clean lines and proper spacing
+- **Centered task title** in large, bold font (42pt)
+- **Separator line** dividing title and description
+- **Description text** in readable font (32pt) with intelligent text wrapping
+- **Right-aligned timestamp** showing when the task was printed
+- **Automatic text wrapping** that optimally uses the full width of the receipt
+
+Example layout:
 ```
-================================
-TASK
-================================
-Title: [Your task title]
---------------------------------
-Description:
-[Your task description]
-================================
+┌─────────────────────────────────┐
+│                                 │
+│        Check Engine Oil         │
+│─────────────────────────────────│
+│ Check and top up engine oil     │
+│ before departure. Also inspect  │
+│ for any leaks or unusual wear.  │
+│─────────────────────────────────│
+│                  2024-01-15 14:30:25 │
+└─────────────────────────────────┘
 ```
 
 ## Supported Printers
@@ -98,12 +113,26 @@ This project uses python-escpos which supports a wide range of ESC/POS compatibl
 - The printer may require root access. Try running with `sudo` if needed
 - Alternatively, set up udev rules for your printer device
 
+## Configuration Options
+
+### Image Settings
+The `[image]` section in `config.toml` allows you to customize the receipt appearance:
+- **width**: Image width in pixels (default: 576, good for most thermal printers)
+- **margin**: Space around text in pixels (default: 20)
+- **line_spacing**: Extra spacing between text lines (default: 10)
+
+### Font Handling
+The application automatically tries to load system fonts:
+1. **Primary**: DejaVu Sans fonts (Bold for titles, Regular for text)
+2. **Fallback**: System default fonts if DejaVu is unavailable
+
 ## Development
 
 The application is built with:
-- FastAPI for the web framework
-- python-escpos for printer communication
-- uvicorn as the ASGI server
+- **FastAPI** for the web framework and API endpoints
+- **python-escpos** for thermal printer communication
+- **Pillow (PIL)** for image generation and text rendering
+- **uvicorn** as the ASGI server
 
 To run in development mode with auto-reload:
 ```bash
